@@ -10,14 +10,12 @@ class ArtConverter:
         self.image = self.get_image()
         self.RESOLUTION = self.WIDTH, self.HEIGHT = self.image.shape[0], self.image.shape[1]
         self.surface = pg.display.set_mode(self.RESOLUTION)
-        self.clock = pg.time.Clock()
 
         self.ASCII_CHARS = alphabet
-        self.ASCII_COEFF = 255 // (len(self.ASCII_CHARS) - 1)
+        self.ASCII_COEFF = self.image.max() // (len(self.ASCII_CHARS) - 1)
         self.font = pg.font.SysFont('Courier', font_size, bold=True)
-        self.CHAR_STEP = int(font_size * 0.5)
+        self.CHAR_STEP = int(font_size * 0.8)
         self.RENDERED_ASCII_CHARS = [self.font.render(char, False, 'white') for char in self.ASCII_CHARS]
-        print(self.RENDERED_ASCII_CHARS)
 
     def draw_ascii_image(self):
         char_indices = self.image // self.ASCII_COEFF
@@ -25,7 +23,7 @@ class ArtConverter:
             for y in range(0, self.HEIGHT, self.CHAR_STEP):
                 char_index = char_indices[x, y]
                 if char_index:
-                    self.surface.blit(self.RENDERED_ASCII_CHARS[char_index], (x, y))
+                    self.surface.blit(self.RENDERED_ASCII_CHARS[min(char_index, len(self.ASCII_CHARS) - 1)], (x, y))
 
     def get_image(self):
         transposed_image = cv2.transpose(self.cv2_image)
@@ -39,7 +37,6 @@ class ArtConverter:
     def draw(self):
         self.surface.fill('black')
         self.draw_ascii_image()
-        self.draw_resized_cv2_image()
 
     def save_image(self):
         pygame_image = pg.surfarray.array3d(self.surface)
@@ -47,15 +44,10 @@ class ArtConverter:
         cv2.imwrite(f'{self.path.strip(".jpg")}_converted.jpg', cv2_img)
 
     def run(self):
-        while True:
-            [exit() for event in pg.event.get() if event.type == pg.QUIT]
-            self.draw()
-            self.save_image()
-            pg.display.set_caption(str(self.clock.get_fps()))
-            pg.display.flip()
-            self.clock.tick()
+        self.draw()
+        self.save_image()
 
 
 if __name__ == '__main__':
-    app = ArtConverter()
+    app = ArtConverter('image/sasha.jpg', alphabet=' .:!/r(l1Z4H9W8$@'[::-1])
     app.run()
