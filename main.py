@@ -15,7 +15,7 @@ class ArtConverter:
         self.ASCII_COEFF = self.image.max() // (len(self.ASCII_CHARS) - 1)
         self.font = pg.font.SysFont('Courier', font_size, bold=True)
         self.CHAR_STEP = int(font_size * 0.8)
-        self.RENDERED_ASCII_CHARS = [self.font.render(char, False, 'white') for char in self.ASCII_CHARS]
+        self.RENDERED_ASCII_CHARS = [self.font.render(char, False, 'green') for char in self.ASCII_CHARS]
 
     def draw_ascii_image(self):
         char_indices = self.image // self.ASCII_COEFF
@@ -49,5 +49,5 @@ class ArtConverter:
 
 
 if __name__ == '__main__':
-    app = ArtConverter('image/sasha.jpg', alphabet=' .:!/r(l1Z4H9W8$@'[::-1])
+    app = ArtConverter('image/vova.jpg', alphabet=' .:!/r(l1Z4H9W8$@')
     app.run()
