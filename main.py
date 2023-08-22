@@ -11,6 +11,7 @@ class ArtConverter:
             'green': (0, 255, 0),
             'blue': (255, 0, 0),
             'red': (0, 0, 255),
+            'purple':(255, 0, 255),
             'white': (255, 255, 255)
         }
 
@@ -79,15 +80,16 @@ class ArtConverter:
         for frame in frames:
             i += 1
             ascii_frames.append(self.create_ascii_image_cv2(image=frame, color=color))
-            print(f'{i / length:4%}')
+            print(f'{i / length:5%}')
 
         return ascii_frames
 
     @staticmethod
     def create_and_save_ascii_video(path, frames, frame_size, fps, name='ascii'):
-        print(f'Saving video {path.strip(".mp4")}_{name}.mp4')
+        path = f'{path.strip(".mp4")}_{name}.mp4'
+        print(f'Saving video {path}')
         output = cv2.VideoWriter(
-            f'{path.strip(".mp4")}_{name}.mp4',
+            path,
             cv2.VideoWriter.fourcc(*'mp4v'),
             fps,
             frame_size
@@ -109,6 +111,6 @@ class ArtConverter:
 
 
 if __name__ == '__main__':
-    app = ArtConverter(font_size=0.25)
-    app.run_video('image/test.mp4', color='green', name='green')
+    app = ArtConverter()
+    app.run_photo('image/egor.jpg', color='purple')
     cv2.destroyAllWindows()
