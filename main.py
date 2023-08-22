@@ -14,14 +14,20 @@ class ArtConverter:
             'white': (255, 255, 255)
         }
 
+    # Photo processing
     @staticmethod
-    def get_image(path):
-        image = cv2.imread(path)
+    def get_gray_image(path=None, image=None):
+        if path:
+            image = cv2.imread(path)
         gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         return gray_image
 
-    def create_ascii_image_cv2(self, path: str, color: str = 'white'):
-        gray_image = self.get_image(path)
+    def create_ascii_image_cv2(self, path: str = None, image=None, color: str = 'white'):
+        if path:
+            gray_image = self.get_gray_image(path=path)
+        else:
+            gray_image = self.get_gray_image(image=image)
+
         resolution = width, height = gray_image.shape[0], gray_image.shape[1]
         ascii_coeff = gray_image.max() // (len(self.ASCII_CHARS) - 1)
 
@@ -48,11 +54,61 @@ class ArtConverter:
     def save_ascii_image(path, image, name='ascii'):
         cv2.imwrite(f'{path.strip(".jpg")}_{name}.jpg', image)
 
+    # Video processing
+    @staticmethod
+    def get_frames(path):
+        video = cv2.VideoCapture(path)
+        fps = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
+        frame_size = (int(video.get(3)), int(video.get(4)))
+        frames = []
+        while video.isOpened():
+            ret, frame = video.read()
+            if ret:
+                frames.append(frame)
+            else:
+                video.release()
+
+        video.release()
+        return frames, frame_size, fps
+
+    def convert_to_ascii_frames(self, frames, color: str = 'white'):
+        print('Converting to ASCII...')
+        ascii_frames = []
+        i = 0
+        length = len(frames)
+        for frame in frames:
+            i += 1
+            ascii_frames.append(self.create_ascii_image_cv2(image=frame, color=color))
+            print(f'{i / length:4%}')
+
+        return ascii_frames
+
+    @staticmethod
+    def create_and_save_ascii_video(path, frames, frame_size, fps, name='ascii'):
+        print(f'Saving video {path.strip(".mp4")}_{name}.mp4')
+        output = cv2.VideoWriter(
+            f'{path.strip(".mp4")}_{name}.mp4',
+            cv2.VideoWriter.fourcc(*'mp4v'),
+            fps,
+            frame_size
+        )
+
+        [output.write(frame) for frame in frames]
+
+        output.release()
+
+    # Main methods
+    def run_video(self, path: str, color: str = 'white', name='ascii'):
+        frames, frame_size, fps = self.get_frames(path)
+        ascii_frames = self.convert_to_ascii_frames(frames, color)
+        self.create_and_save_ascii_video(path, ascii_frames, frame_size, fps, name)
+
     def run_photo(self, path: str, color: str = 'white', name='ascii'):
-        ascii_image = self.create_ascii_image_cv2(path, color)
+        ascii_image = self.create_ascii_image_cv2(path=path, color=color)
         self.save_ascii_image(path, ascii_image, name)
 
 
 if __name__ == '__main__':
-    app = ArtConverter(font_size=0.05)
-    app.run_photo('image/test.jpg', 'green')
+    app = ArtConverter(font_size=0.25)
+    app.run_video('image/test.mp4', color='green', name='green')
+    cv2.destroyAllWindows()
