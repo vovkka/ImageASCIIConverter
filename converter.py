@@ -109,6 +109,6 @@ class ArtConverter:
 
 if __name__ == '__main__':
     app = ArtConverter()
-    app.run_photo('image/test.jpg', color='purple', name='commit_test')
-    app.run_video('image/test.mp4', color='purple', name='commit_test')
+    app.run_photo('image/egor.jpg', color='purple', name='commit_test')
+    app.run_video('image/ya2.mp4', color='purple', name='commit_test')
     cv2.destroyAllWindows()
