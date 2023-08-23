@@ -23,12 +23,7 @@ class ArtConverter:
         gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         return gray_image
 
-    def create_ascii_image_cv2(self, path: str = None, image=None, color: str = 'white'):
-        if path:
-            gray_image = self.get_gray_image(path=path)
-        else:
-            gray_image = self.get_gray_image(image=image)
-
+    def create_ascii_image_cv2(self, gray_image, color: str = 'white'):
         resolution = width, height = gray_image.shape[0], gray_image.shape[1]
         ascii_coeff = gray_image.max() // (len(self.ASCII_CHARS) - 1)
 
@@ -79,7 +74,8 @@ class ArtConverter:
         length = len(frames)
         for frame in frames:
             i += 1
-            ascii_frames.append(self.create_ascii_image_cv2(image=frame, color=color))
+            gray_frame = self.get_gray_image(image=frame)
+            ascii_frames.append(self.create_ascii_image_cv2(gray_image=gray_frame, color=color))
             print(f'{i / length:5%}')
 
         return ascii_frames
@@ -106,11 +102,13 @@ class ArtConverter:
         self.create_and_save_ascii_video(path, ascii_frames, frame_size, fps, name)
 
     def run_photo(self, path: str, color: str = 'white', name='ascii'):
-        ascii_image = self.create_ascii_image_cv2(path=path, color=color)
+        gray_image = self.get_gray_image(path=path)
+        ascii_image = self.create_ascii_image_cv2(gray_image=gray_image, color=color)
         self.save_ascii_image(path, ascii_image, name)
 
 
 if __name__ == '__main__':
     app = ArtConverter()
-    app.run_photo('image/egor.jpg', color='purple')
+    app.run_photo('image/egor.jpg', color='purple', name='commit_test')
+    app.run_video('image/ya2.mp4', color='purple', name='commit_test')
     cv2.destroyAllWindows()
