@@ -1,9 +1,16 @@
 from numpy import full, uint8, ndarray
 import cv2
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='#%(levelname)s: %(name)s.%(funcName)s - %(message)s'
+)
 
 
 class ArtConverter:
     def __init__(self, font_size=0.2, alphabet=' .:!/r(l1Z4H9W8$@'):
+        self.log = logging.getLogger('ArtConverter')
         self.ASCII_CHARS = alphabet
         self.font_size = font_size
         self.CHAR_STEP = int(font_size * 40)
@@ -47,9 +54,10 @@ class ArtConverter:
         resized_image = cv2.resize(image, (640, 360), interpolation=cv2.INTER_AREA)
         cv2.imshow('img', resized_image)
 
-    @staticmethod
-    def save_ascii_image(path: str, image: ndarray, name: str = 'ascii'):
-        cv2.imwrite(f'{path.strip(".jpg")}_{name}.jpg', image)
+    def save_ascii_image(self, path: str, image: ndarray, name: str = 'ascii'):
+        path = f'{path.strip(".jpg")}_{name}.jpg'
+        cv2.imwrite(path, image)
+        self.log.info(f'Image saved to {path}')
 
     # Video processing
     @staticmethod
@@ -68,7 +76,7 @@ class ArtConverter:
         return frames, frame_size, fps
 
     def convert_to_ascii_frames(self, frames: list[ndarray], color: str = 'white'):
-        print('Converting to ASCII...')
+        self.log.info('Converting to ASCII...')
         ascii_frames = []
         i = 0
         length = len(frames)
@@ -76,14 +84,13 @@ class ArtConverter:
             i += 1
             gray_frame = self.get_gray_image(image=frame)
             ascii_frames.append(self.create_ascii_image_cv2(gray_image=gray_frame, color=color))
-            print(f'{i / length:5%}')
+            self.log.info(f'{i / length:.0%}')
 
         return ascii_frames
 
-    @staticmethod
-    def create_ascii_video(path: str, frames: list[ndarray], frame_size: tuple[int, int], fps: int, name='ascii'):
+    def create_ascii_video(self, path: str, frames: list[ndarray], frame_size: tuple[int, int], fps: int, name='ascii'):
         path = f'{path.strip(".mp4")}_{name}.mp4'
-        print(f'Saving video {path}')
+        self.log.info(f'Saving video to {path}')
         output = cv2.VideoWriter(
             path,
             cv2.VideoWriter.fourcc(*'mp4v'),
