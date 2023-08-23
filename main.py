@@ -1,4 +1,4 @@
-import numpy as np
+from numpy import full, uint8, ndarray
 import cv2
 
 
@@ -11,23 +11,24 @@ class ArtConverter:
             'green': (0, 255, 0),
             'blue': (255, 0, 0),
             'red': (0, 0, 255),
-            'purple':(255, 0, 255),
+            'purple': (255, 0, 255),
             'white': (255, 255, 255)
         }
 
     # Photo processing
     @staticmethod
-    def get_gray_image(path=None, image=None):
+    def get_gray_image(path: str = None, image: ndarray = None):
         if path:
             image = cv2.imread(path)
         gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
         return gray_image
 
-    def create_ascii_image_cv2(self, gray_image, color: str = 'white'):
+    def create_ascii_image_cv2(self, gray_image: ndarray, color: str = 'white'):
         resolution = width, height = gray_image.shape[0], gray_image.shape[1]
         ascii_coeff = gray_image.max() // (len(self.ASCII_CHARS) - 1)
 
-        black_image = np.full((*resolution, 3), 0, dtype=np.uint8)
+        black_image = full((*resolution, 3), 0, dtype=uint8)
         char_indices = gray_image // ascii_coeff
         for x in range(0, width, self.CHAR_STEP):
             for y in range(0, height, self.CHAR_STEP):
@@ -42,17 +43,17 @@ class ArtConverter:
         return black_image
 
     @staticmethod
-    def draw_resized_cv2_image(cv2_image):
-        resized_cv2_image = cv2.resize(cv2_image, (640, 360), interpolation=cv2.INTER_AREA)
-        cv2.imshow('img', resized_cv2_image)
+    def draw_resized_image(image: ndarray):
+        resized_image = cv2.resize(image, (640, 360), interpolation=cv2.INTER_AREA)
+        cv2.imshow('img', resized_image)
 
     @staticmethod
-    def save_ascii_image(path, image, name='ascii'):
+    def save_ascii_image(path: str, image: ndarray, name: str = 'ascii'):
         cv2.imwrite(f'{path.strip(".jpg")}_{name}.jpg', image)
 
     # Video processing
     @staticmethod
-    def get_frames(path):
+    def get_frames(path: str):
         video = cv2.VideoCapture(path)
         fps = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
         frame_size = (int(video.get(3)), int(video.get(4)))
@@ -64,10 +65,9 @@ class ArtConverter:
             else:
                 video.release()
 
-        video.release()
         return frames, frame_size, fps
 
-    def convert_to_ascii_frames(self, frames, color: str = 'white'):
+    def convert_to_ascii_frames(self, frames: list[ndarray], color: str = 'white'):
         print('Converting to ASCII...')
         ascii_frames = []
         i = 0
@@ -81,7 +81,7 @@ class ArtConverter:
         return ascii_frames
 
     @staticmethod
-    def create_and_save_ascii_video(path, frames, frame_size, fps, name='ascii'):
+    def create_ascii_video(path: str, frames: list[ndarray], frame_size: tuple[int, int], fps: int, name='ascii'):
         path = f'{path.strip(".mp4")}_{name}.mp4'
         print(f'Saving video {path}')
         output = cv2.VideoWriter(
@@ -99,7 +99,7 @@ class ArtConverter:
     def run_video(self, path: str, color: str = 'white', name='ascii'):
         frames, frame_size, fps = self.get_frames(path)
         ascii_frames = self.convert_to_ascii_frames(frames, color)
-        self.create_and_save_ascii_video(path, ascii_frames, frame_size, fps, name)
+        self.create_ascii_video(path, ascii_frames, frame_size, fps, name)
 
     def run_photo(self, path: str, color: str = 'white', name='ascii'):
         gray_image = self.get_gray_image(path=path)
@@ -109,6 +109,6 @@ class ArtConverter:
 
 if __name__ == '__main__':
     app = ArtConverter()
-    app.run_photo('image/egor.jpg', color='purple', name='commit_test')
-    app.run_video('image/ya2.mp4', color='purple', name='commit_test')
+    app.run_photo('image/test.jpg', color='purple', name='commit_test')
+    app.run_video('image/test.mp4', color='purple', name='commit_test')
     cv2.destroyAllWindows()
