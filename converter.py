@@ -9,11 +9,11 @@ logging.basicConfig(
 
 
 class ArtConverter:
-    def __init__(self, font_size=0.2, alphabet=' .:!/r(l1Z4H9W8$@'):
+    def __init__(self, font_size=0.2, step_coeff=40, alphabet=' .:!/r(l1Z4H9W8$@'):
         self.log = logging.getLogger('ArtConverter')
         self.ASCII_CHARS = alphabet
         self.font_size = font_size
-        self.CHAR_STEP = int(font_size * 40)
+        self.CHAR_STEP = int(font_size * step_coeff)
         self.colors = {
             'green': (0, 255, 0),
             'blue': (255, 0, 0),
@@ -31,7 +31,7 @@ class ArtConverter:
 
         return gray_image
 
-    def create_ascii_image_cv2(self, gray_image: ndarray, color: str = 'white') -> ndarray:
+    def create_ascii_image(self, gray_image: ndarray, color: str = 'white') -> ndarray:
         resolution = width, height = gray_image.shape[0], gray_image.shape[1]
         ascii_coeff = gray_image.max() // (len(self.ASCII_CHARS) - 1)
 
@@ -59,6 +59,28 @@ class ArtConverter:
         cv2.imwrite(path, image)
         self.log.info(f'Image saved to {path}')
 
+    # Color photo processing
+    def create_color_ascii_image(self, color_image: ndarray):
+        gray_image = self.get_gray_image(image=color_image)
+        resolution = width, height = gray_image.shape[0], gray_image.shape[1]
+        ascii_coeff = gray_image.max() // (len(self.ASCII_CHARS) - 1)
+
+        black_image = full((*resolution, 3), 0, dtype=uint8)
+        char_indices = gray_image // ascii_coeff
+        for x in range(0, width, self.CHAR_STEP):
+            for y in range(0, height, self.CHAR_STEP):
+                char_index = char_indices[x, y]
+                # noinspection PyTypeChecker
+                color: list = ndarray.tolist(color_image[x, y])
+
+                cv2.putText(black_image,
+                            self.ASCII_CHARS[min(char_index, len(self.ASCII_CHARS) - 1)],
+                            (y, x),
+                            cv2.FONT_HERSHEY_SIMPLEX,
+                            self.font_size,
+                            color)
+        return black_image
+
     # Video processing
     @staticmethod
     def get_frames(path: str) -> tuple[list[ndarray], tuple[int, int], int]:
@@ -83,7 +105,7 @@ class ArtConverter:
         for frame in frames:
             i += 1
             gray_frame = self.get_gray_image(image=frame)
-            ascii_frames.append(self.create_ascii_image_cv2(gray_image=gray_frame, color=color))
+            ascii_frames.append(self.create_ascii_image(gray_image=gray_frame, color=color))
             self.log.info(f'{i / length:.0%}')
 
         return ascii_frames
@@ -103,19 +125,25 @@ class ArtConverter:
         output.release()
 
     # Main methods
-    def run_video(self, path: str, color: str = 'white', name='ascii') -> None:
+    def run_video(self, path: str, color: str = 'white', name: str= 'ascii') -> None:
         frames, frame_size, fps = self.get_frames(path)
         ascii_frames = self.convert_to_ascii_frames(frames, color)
         self.create_ascii_video(path, ascii_frames, frame_size, fps, name)
 
-    def run_photo(self, path: str, color: str = 'white', name='ascii') -> None:
+    def run_photo(self, path: str, color: str = 'white', name: str = 'ascii') -> None:
         gray_image = self.get_gray_image(path=path)
-        ascii_image = self.create_ascii_image_cv2(gray_image=gray_image, color=color)
+        ascii_image = self.create_ascii_image(gray_image=gray_image, color=color)
         self.save_ascii_image(path, ascii_image, name)
+
+    def run_color_photo(self, path: str, name: str = 'ascii'):
+        color_image = cv2.imread(path)
+        ascii_color_image = self.create_color_ascii_image(color_image)
+        self.save_ascii_image(path, ascii_color_image, name)
 
 
 if __name__ == '__main__':
     app = ArtConverter()
-    app.run_photo('image/egor.jpg', color='purple', name='commit_test')
-    app.run_video('image/ya2.mp4', color='purple', name='commit_test')
+    app.run_photo('image/test.jpg', color='purple')
+    app.run_color_photo('image/rainbow.jpg', name='color_test')
+    app.run_video('image/test.mp4', color='green')
     cv2.destroyAllWindows()
